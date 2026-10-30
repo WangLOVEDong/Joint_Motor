@@ -29,6 +29,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "vofa.h"
+#include "encoder.h"
+#include "adc_sampling.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,7 +53,6 @@
 /* USER CODE BEGIN PV */
 
 static uint32_t vofa_last_tick = 0U;
-static float vofa_test_value = 0.0f;
 
 /* USER CODE END PV */
 
@@ -115,6 +116,18 @@ int main(void)
                     MT6816_CS_Pin,
                     GPIO_PIN_SET);
 
+  /* 按教程要求选择SPI功能 */
+  HAL_GPIO_WritePin(MT6816_MODE_GPIO_Port,
+                    MT6816_MODE_Pin,
+                    GPIO_PIN_SET);
+
+  /* 给编码器留出上电准备时间 */
+  HAL_Delay(20);         
+
+  if (ADC_Sampling_Start() != HAL_OK)
+  {
+      Error_Handler();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -124,32 +137,24 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    /* USER CODE BEGIN 3 */
-
     uint32_t now = HAL_GetTick();
-    /* 每10ms尝试发送一次，即目标刷新率100Hz */
+
     if ((uint32_t)(now - vofa_last_tick) >= 10U)
     {
         vofa_last_tick = now;
 
-        float data[2] =
+        ADC_CurrentData_t sample;
+        ADC_Sampling_GetCurrent(&sample);
+
+        float data[4] =
         {
-            vofa_test_value,
-            100.0f - vofa_test_value
+            sample.u_amp,
+            sample.v_amp,
+            sample.w_amp,
+            (float)sample.ready
         };
 
-        HAL_StatusTypeDef status =
-            VOFA_SendFloatArray_DMA(data, 2U);
-
-        if (status == HAL_OK)
-        {
-            vofa_test_value += 1.0f;
-
-            if (vofa_test_value > 100.0f)
-            {
-                vofa_test_value = 0.0f;
-            }
-        }
+        (void)VOFA_SendFloatArray_DMA(data, 4U);
     }
   }
   /* USER CODE END 3 */

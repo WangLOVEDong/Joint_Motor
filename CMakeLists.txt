@@ -32,7 +32,9 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 enable_language(C ASM)
 
 # Create an executable object type
-add_executable(${CMAKE_PROJECT_NAME})
+add_executable(${CMAKE_PROJECT_NAME}
+    App/ENCODER/encoder.h
+    App/ADC_SAMPLING/adc_sampling.h)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -46,12 +48,16 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     App/VOFA/vofa.c
+    APP/ENCODER/encoder.c
+    APP/ADC_SAMPLING/adc_sampling.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     App/VOFA
+    APP/ENCODER
+    APP/ADC_SAMPLING
 )
 
 # Add project symbols (macros)
